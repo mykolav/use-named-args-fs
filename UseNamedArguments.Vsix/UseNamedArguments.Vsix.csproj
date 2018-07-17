@@ -88,6 +88,8 @@
     <ProjectReference Include="..\UseNamedArgs\UseNamedArgs.fsproj">
       <Project>{5e873c1f-1747-49d2-bc6d-50fd64fa5a9c}</Project>
       <Name>UseNamedArgs</Name>
+      <IncludeOutputGroupsInVSIX>BuiltProjectOutputGroup%3bBuiltProjectOutputGroupDependencies%3bGetCopyToOutputDirectoryItems%3bSatelliteDllsProjectOutputGroup%3b</IncludeOutputGroupsInVSIX>
+      <IncludeOutputGroupsInVSIXLocalOnly>DebugSymbolsProjectOutputGroup%3b</IncludeOutputGroupsInVSIXLocalOnly>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -2,6 +2,10 @@
 
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
+open UseNamedArgs.SemanticModelExtensions
+open System
+open UseNamedArgs
+open UseNamedArgs.MaybeBuilder
 
 /// <summary>
 /// This file contains code that looks at an invocation expression and its arguments
@@ -135,7 +139,44 @@ open Microsoft.CodeAnalysis.CSharp.Syntax
 //    }
 //}
 
+//let getArgumentInfoOrRaise (semanticModel: SemanticModel) argumentSyntax =
+//    match semanticModel.GetArgumentInfo argumentSyntax with
+//    | Some argInfo -> argInfo
+//    | None         -> raise (InvalidOperationException(sprintf "Could not find the corresponding parameter for [%A]" argumentSyntax))
+
+let getArgumentInfos
+    (semanticModel: SemanticModel) 
+    (argumentSyntaxes: SeparatedSyntaxList<ArgumentSyntax>) =
+    //let (>>=) m f = Option.bind f m
+    //let appendArgumentInfo (maybeArgInfo: ArgumentInfo option) (acc: ArgumentInfo list) =
+    //    maybe {
+    //        let! argInfo = maybeArgInfo
+    //        return argInfo::acc
+    //    }
+    let maybeInfos = argumentSyntaxes |> Seq.map semanticModel.GetArgumentInfo 
+    //Seq.foldBack (fun info acc -> acc >>= appendArgumentInfo info) maybeInfos (Some [])
+    Seq.foldBack 
+        (fun info acc -> maybe { let! argInfos = acc in let! argInfo = info in return argInfo::argInfos }) 
+        maybeInfos 
+        (Some [])
+
+    //let appendArgumentInfo (argSyntax: ArgumentSyntax) (acc: ArgumentInfo list option) =
+    //    match acc with
+    //    | None          -> None, None
+    //    | Some argInfos -> 
+    //        let maybeArgInfo = semanticModel.GetArgumentInfo argSyntax
+    //        match maybeArgInfo with 
+    //        | Some argInfo -> Some argInfo, Some (argInfo::argInfos)
+    //        | None         -> None,         None
+    //Seq.mapFoldBack appendArgumentInfo argumentSyntaxes (Some [])
+
+
 let getArgumentsGroupedByType 
     (semanticModel: SemanticModel) 
     (argumentSyntaxes: SeparatedSyntaxList<ArgumentSyntax>) =
-    ()
+    maybe {
+        let! argInfos = getArgumentInfos semanticModel argumentSyntaxes
+        return! None
+    }
+
+    

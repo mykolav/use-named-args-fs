@@ -25,22 +25,9 @@ type public UseNamedArgsAnalyzer() =
     override val SupportedDiagnostics = ImmutableArray.Create(descriptor)
 
     override this.Initialize (context: AnalysisContext) =
-        (*
-            // Register ourself to get invoked to analyze 
-            //   - invocation expressions; e. g., calling a method. 
-            //   - and object creation expressions; e. g., invoking a constructor.
-            context.RegisterSyntaxNodeAction(
-                AnalyzeInvocationOrObjectCreationExpressionNode,
-                SyntaxKind.InvocationExpression,
-                SyntaxKind.ObjectCreationExpression);
-        *)
-        //let analyze (ctx: SymbolAnalysisContext) = 
-        //    match ctx.Symbol with
-        //        | z when z.Name.ToCharArray().Any(fun l -> Char.IsLower(l)) -> 
-        //            let d = Diagnostic.Create(descriptor, z.Locations.First(), z.Name)
-        //            ctx.ReportDiagnostic(d)
-        //        | _->()
-
+        // Register ourself to get invoked to analyze 
+        //   - invocation expressions; e. g., calling a method. 
+        //   - and object creation expressions; e. g., invoking a constructor.
         context.RegisterSyntaxNodeAction(
             //new Action<_>(this.Analyze),
             (fun c -> this.Analyze c),
@@ -118,7 +105,7 @@ type public UseNamedArgsAnalyzer() =
             | (  MethodKind.Ordinary
                 | MethodKind.Constructor 
                 | MethodKind.LocalFunction) -> return ()
-            | _                            -> return ()
+            | _                             -> return ()
 
             // We've got a supported kind of method.
             // Delegate heavy-lifting to the call below.

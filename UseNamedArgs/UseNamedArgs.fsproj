@@ -5,6 +5,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="CSharpAdapters.fs" />
+    <Compile Include="MaybeBuilder.fs" />
     <Compile Include="ArgumentSyntaxAndParameterSymbol.fs" />
     <Compile Include="ArgumentInfo.fs" />
     <Compile Include="SemanticModelExtensions.fs" />

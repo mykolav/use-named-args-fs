@@ -12,7 +12,7 @@ open UseNamedArgs.MaybeBuilder
 /// corresponding <see cref="IParameterSymbol" /> for each argument.
 /// </summary>
 type SemanticModel with
-    member semanticModel.GetArgumentInfo1 (argumentOrNull: ArgumentSyntax) =
+    member semanticModel.GetArgumentInfo (argumentOrNull: ArgumentSyntax) =
         maybe {
             let! argument = Option.ofObj argumentOrNull
             let! argList = argument.Parent |> Option.ofType<ArgumentListSyntax>

@@ -5,12 +5,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="CSharpAdapters.fs" />
-    <Compile Include="MaybeBuilder.fs" />
-    <Compile Include="ArgumentSyntaxAndParameterSymbol.fs" />
-    <Compile Include="ArgumentInfo.fs" />
-    <Compile Include="SemanticModelExtensions.fs" />
-    <Compile Include="InvocationExprSyntax.fs" />
+    <Compile Include="Support\SeqExtensions.fs" />
+    <Compile Include="Support\CSharpAdapters.fs" />
+    <Compile Include="Support\MaybeBuilder.fs" />
+    <Compile Include="Analysis\ArgumentAndParameter.fs" />
+    <Compile Include="Analysis\ArgumentInfo.fs" />
+    <Compile Include="Analysis\SemanticModelExtensions.fs" />
+    <Compile Include="Analysis\InvocationExprSyntax.fs" />
     <Compile Include="UseNamedArgsAnalyzer.fs" />
   </ItemGroup>
 

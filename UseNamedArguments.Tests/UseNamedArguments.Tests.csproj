@@ -22,4 +22,8 @@
     <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\UseNamedArguments\UseNamedArguments.csproj" />
+  </ItemGroup>
+
 </Project>

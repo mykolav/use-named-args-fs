@@ -16,20 +16,21 @@ open System
 type public UseNamedArgsAnalyzer() = 
     inherit DiagnosticAnalyzer()
     static let diagnosticId = "UseNamedArgs"
+    static let messageFormat = "'{0}' should be invoked with named arguments as parameters {1} have the same type"
+    static let description = "Methods which have parameters of the same type should be invoked with named arguments."
     static let descriptor = 
         DiagnosticDescriptor(
             diagnosticId,
             "Method invocation with positional arguments." (*title*),
-            "'{0}' should be invoked with named arguments as parameters {1} have the same type" (*messageFormat*), 
-
+            messageFormat,
             "Naming" (*category*),
             DiagnosticSeverity.Warning (*defaultSeverity*), 
             true (*isEnabeledByDefault*), 
-            "Methods which have parameters of the same type should be invoked with named arguments." (*description*),
-
+            description,
             null (*helpLinkUri*))
 
     static member DiagnosticId = diagnosticId
+    static member MessageFormat = messageFormat
 
     override val SupportedDiagnostics = ImmutableArray.Create(descriptor)
 
@@ -88,7 +89,11 @@ type public UseNamedArgsAnalyzer() =
                 Diagnostic.Create(
                     descriptor, 
                     invocationExprSyntax.GetLocation(), 
-                    [| methodSymbol.Name; sbDescriptions.ToString() |] (* messageArgs *) ))
+                    (* messageArgs *)
+                    methodSymbol.Name, 
+                    sbDescriptions.ToString()  
+                )
+            )
 
             return ()
         } |> ignore

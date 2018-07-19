@@ -16,18 +16,16 @@ module UseNamedArgs.InvocationExprSyntax
 
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
-open UseNamedArgs.SemanticModelExtensions
 open UseNamedArgs.MaybeBuilder
 open UseNamedArgs.ArgumentAndParameter
-open UseNamedArgs.CSharpAdapters
-open UseNamedArgs.ArgumentInfo
+open UseNamedArgs.ParameterInfo
 
 let getArgumentAndParameters
     (sema: SemanticModel) 
     (argumentSyntaxes: SeparatedSyntaxList<ArgumentSyntax>) =
     let syntaxAndMaybeInfos = 
         argumentSyntaxes 
-        |> Seq.map (fun it -> (it, sema.GetArgumentInfo it))
+        |> Seq.map (fun it -> (it, sema.GetParameterInfo it))
     let folder (syntax, maybeInfo) acc = maybe {
         let! argAndParams = acc 
         let! argInfo = maybeInfo
@@ -54,7 +52,7 @@ let filterArgsWhichShouldBeNamed (argAndParamsByType: seq<ITypeSymbol * seq<Argu
         // If among a group of args of the same type only one is positional,
         // it's impossible to accidentaly switch positions of two positional args.
         // Hence, we don't warn/require the arg should be named.
-        if positionalArgsCount <= 1 then false else
+        positionalArgsCount > 1 &&
         // Otherwise, there're multiple positional args.
         // In case the identifiers of the args are the same as the names of parameters
         // we don't warn/require the args should be named.
@@ -78,7 +76,7 @@ let getArgumentsWhichShouldBeNamed
     let argSyntaxes = invocationExprSyntax.ArgumentList.Arguments
     if argSyntaxes.Count = 0 then Some NoArgsShouldBeNamed else
     maybe {
-        let! lastArgInfo = argSyntaxes |> Seq.last |> sema.GetArgumentInfo
+        let! lastArgInfo = argSyntaxes |> Seq.last |> sema.GetParameterInfo
         if lastArgInfo.Parameter.IsParams then return NoArgsShouldBeNamed else
         let! argAndParamsByType = getArgAndParamsGroupedByType sema argSyntaxes
         return filterArgsWhichShouldBeNamed argAndParamsByType

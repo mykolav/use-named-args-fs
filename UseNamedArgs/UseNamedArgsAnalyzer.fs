@@ -44,20 +44,20 @@ type public UseNamedArgsAnalyzer() =
             SyntaxKind.ObjectCreationExpression)
 
     member private this.Analyze(context: SyntaxNodeAnalysisContext) =
-        let isMethodKindSupported methodKind = 
-            match methodKind with
+        let filterSupported (methodSymbol: IMethodSymbol) = 
+            match methodSymbol.MethodKind with
             // So far we only support analyzing of the three kinds of methods listed below.
             | (   MethodKind.Ordinary
                 | MethodKind.Constructor 
-                | MethodKind.LocalFunction) -> true
-            | _                             -> false
+                | MethodKind.LocalFunction) -> Some methodSymbol
+            | _                             -> None
         maybe {
             let! sema = context.SemanticModel |> Option.ofObj
             let! invocationExprSyntax = context.Node |> Option.ofType<InvocationExpressionSyntax>
             let! methodSymbol = 
                 sema.GetSymbolInfo(invocationExprSyntax).Symbol 
                 |> Option.ofType<IMethodSymbol>
-            if not (isMethodKindSupported methodSymbol.MethodKind) then return () else
+                >>= filterSupported
             // We got a supported kind of method.
             // Delegate heavy-lifting to the call below.
             let! argsWhichShouldBeNamed = getArgumentsWhichShouldBeNamed sema invocationExprSyntax

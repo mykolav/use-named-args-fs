@@ -6,3 +6,5 @@ type MaybeBuilder() =
     member this.Bind(m, f)    = Option.bind f m
 
 let maybe = new MaybeBuilder()
+
+let (>>=) m f = Option.bind f m

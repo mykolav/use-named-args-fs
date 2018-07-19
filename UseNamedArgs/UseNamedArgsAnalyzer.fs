@@ -15,6 +15,7 @@ open System
 [<DiagnosticAnalyzer(Microsoft.CodeAnalysis.LanguageNames.CSharp)>]
 type public UseNamedArgsAnalyzer() = 
     inherit DiagnosticAnalyzer()
+
     static let diagnosticId = "UseNamedArgs"
     static let messageFormat = "'{0}' should be invoked with named arguments as parameters {1} have the same type"
     static let description = "Methods which have parameters of the same type should be invoked with named arguments."
@@ -52,22 +53,19 @@ type public UseNamedArgsAnalyzer() =
         | _                             -> None
 
     member private this.formatDiagMessage argsWhichShouldBeNamed =
-        let describeArgGroup =
-            let mutable groupSeparator = ""
-            fun (sbDescriptions: StringBuilder) (_, argAndParams: seq<ArgumentAndParameter>) -> 
-                let groupDescription = 
-                    String.Join(
-                        ", ",
-                        argAndParams |> Seq.map (fun it -> sprintf "'%s'" it.Parameter.Name))
-                sbDescriptions
-                    .Append(groupSeparator)
-                    .Append(groupDescription) |> ignore
-                groupSeparator <- " and "
-                sbDescriptions
+        let describeArgGroup 
+            (groupDelim: string, sbDescr: StringBuilder) 
+            (_, argAndParams: seq<_>) =
+            let groupDescription = 
+                String.Join(
+                    ", ",
+                    argAndParams |> Seq.map (fun it -> sprintf "'%s'" it.Parameter.Name))
+            (" and ", sbDescr.Append(groupDelim)
+                             .Append(groupDescription))
 
         argsWhichShouldBeNamed 
-        |> Seq.fold describeArgGroup (StringBuilder()) 
-        |> fun sb -> sb.ToString()
+        |> Seq.fold describeArgGroup ("", StringBuilder()) 
+        |> fun (_, sb) -> sb.ToString()
 
     member private this.Analyze(context: SyntaxNodeAnalysisContext) =
         maybe {

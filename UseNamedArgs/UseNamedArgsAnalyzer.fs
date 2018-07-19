@@ -43,57 +43,57 @@ type public UseNamedArgsAnalyzer() =
             SyntaxKind.InvocationExpression, 
             SyntaxKind.ObjectCreationExpression)
 
+    member private this.filterSupported (methodSymbol: IMethodSymbol) = 
+        match methodSymbol.MethodKind with
+        // So far we only support analyzing of the three kinds of methods listed below.
+        | (   MethodKind.Ordinary
+            | MethodKind.Constructor 
+            | MethodKind.LocalFunction) -> Some methodSymbol
+        | _                             -> None
+
+    member private this.formatDiagMessage argsWhichShouldBeNamed =
+        let describeArgGroup =
+            let mutable groupSeparator = ""
+            fun (sbDescriptions: StringBuilder) (_, argAndParams: seq<ArgumentAndParameter>) -> 
+                let groupDescription = 
+                    String.Join(
+                        ", ",
+                        argAndParams |> Seq.map (fun it -> sprintf "'%s'" it.Parameter.Name))
+                sbDescriptions
+                    .Append(groupSeparator)
+                    .Append(groupDescription) |> ignore
+                groupSeparator <- " and "
+                sbDescriptions
+
+        argsWhichShouldBeNamed 
+        |> Seq.fold describeArgGroup (StringBuilder()) 
+        |> fun sb -> sb.ToString()
+
     member private this.Analyze(context: SyntaxNodeAnalysisContext) =
-        let filterSupported (methodSymbol: IMethodSymbol) = 
-            match methodSymbol.MethodKind with
-            // So far we only support analyzing of the three kinds of methods listed below.
-            | (   MethodKind.Ordinary
-                | MethodKind.Constructor 
-                | MethodKind.LocalFunction) -> Some methodSymbol
-            | _                             -> None
         maybe {
             let! sema = context.SemanticModel |> Option.ofObj
             let! invocationExprSyntax = context.Node |> Option.ofType<InvocationExpressionSyntax>
             let! methodSymbol = 
                 sema.GetSymbolInfo(invocationExprSyntax).Symbol 
                 |> Option.ofType<IMethodSymbol>
-                >>= filterSupported
+                >>= this.filterSupported
             // We got a supported kind of method.
             // Delegate heavy-lifting to the call below.
             let! argsWhichShouldBeNamed = getArgumentsWhichShouldBeNamed sema invocationExprSyntax
 
             // We inspected the arguments of invocation expression.
+            if argsWhichShouldBeNamed |> Seq.any then
+                // There are arguments that should be named -- emit the diagnostic.
+                return context.ReportDiagnostic(
+                    Diagnostic.Create(
+                        descriptor, 
+                        invocationExprSyntax.GetLocation(), 
+                        // messageArgs
+                        methodSymbol.Name, 
+                        this.formatDiagMessage argsWhichShouldBeNamed
+                    )
+                )
             // If none of them should be named or, maybe, they already are named,
             // we have nothing more to do.
-            if argsWhichShouldBeNamed |> Seq.isEmpty then return () else
-
-            // There are arguments that should be named.
-            // Prepare the diagnositc's message.
-            let mkDescribeArgGroup (sbDescriptions: StringBuilder) =
-                let mutable groupSeparator = ""
-                fun (_, argAndParams: seq<ArgumentAndParameter>) -> 
-                    let groupDescription = 
-                        String.Join(
-                            ", ",
-                            argAndParams |> Seq.map (fun it -> sprintf "'%s'" it.Parameter.Name))
-                    sbDescriptions
-                        .Append(groupSeparator)
-                        .Append(groupDescription) |> ignore
-                    groupSeparator <- " and "
-
-            let sbDescriptions = StringBuilder()
-            argsWhichShouldBeNamed |> Seq.iter (mkDescribeArgGroup sbDescriptions)
-
-            // And finally, emit the diagnostic.
-            context.ReportDiagnostic(
-                Diagnostic.Create(
-                    descriptor, 
-                    invocationExprSyntax.GetLocation(), 
-                    (* messageArgs *)
-                    methodSymbol.Name, 
-                    sbDescriptions.ToString()  
-                )
-            )
-
-            return ()
+            else return ()
         } |> ignore

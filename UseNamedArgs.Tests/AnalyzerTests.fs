@@ -72,14 +72,10 @@ let analyzerTests =
                 UseNamedArgumentsDiagnosticResult.Create(
                     UseNamedArgsAnalyzer.DiagnosticId,
                     UseNamedArgsAnalyzer.MessageFormat,
-                    "Gork",
-                    [ [ "line"; "column" ] :> seq<_>] :> seq<_>,
-                    DiagnosticResultLocation("Test0.cs", (*line:*) 9, (*column:*) 29));
+                    invokedMethodName="Gork",
+                    parameterNamesByType=([ [ "line"; "column" ] :> seq<_>] :> seq<_>),
+                    locations=[|DiagnosticResultLocation("Test0.cs", line=9, column=29)|]);
 
-            UseNamedArgsCSharpAnalyzerRunner.InvokeAndVerifyDiagnostic(
-                UseNamedArgsAnalyzer(),
-                Assert(),
-                testCodeSnippet, 
-                expectedDiagnostic);
+            Expect.diagnostics [|expectedDiagnostic|] testCodeSnippet
         }
 ]

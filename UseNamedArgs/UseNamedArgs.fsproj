@@ -12,10 +12,12 @@
     <Compile Include="Analysis\ArgumentAndParameter.fs" />
     <Compile Include="Analysis\InvocationExprSyntax.fs" />
     <Compile Include="UseNamedArgsAnalyzer.fs" />
+    <Compile Include="UseNamedArgsCodeFixProvider.fs" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis" Version="2.8.2" />
+    <PackageReference Include="TaskBuilder.fs" Version="2.0.0" />
   </ItemGroup>
 
   <ItemGroup>

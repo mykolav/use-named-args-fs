@@ -33,5 +33,5 @@ Rewrite the `UseNamedArgs.TestsSupport` project in F#
 
 # License
 
-The [UseNamedArguments](https://github.com/mykolav/use-named-arguments) analyzer and code-fix are licensed under the MIT license.  
+The [UseNamedArgs](https://github.com/mykolav/use-named-args-fs) analyzer and code-fix provider are licensed under the MIT license.  
 So they can be used freely in commercial applications.

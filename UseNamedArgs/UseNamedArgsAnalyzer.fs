@@ -1,16 +1,16 @@
 namespace UseNamedArgs.Analyzer
 
+open System
+open System.Collections.Immutable
+open System.Text
 open Microsoft.CodeAnalysis
-open Microsoft.CodeAnalysis.Diagnostics
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
-open System.Collections.Immutable
-open UseNamedArgs.MaybeBuilder
+open Microsoft.CodeAnalysis.Diagnostics
+open UseNamedArgs.ArgumentAndParameter // Actually it's used
 open UseNamedArgs.CSharpAdapters
 open UseNamedArgs.InvocationExprSyntax
-open UseNamedArgs.ArgumentAndParameter
-open System.Text
-open System
+open UseNamedArgs.MaybeBuilder
 
 [<DiagnosticAnalyzer(Microsoft.CodeAnalysis.LanguageNames.CSharp)>]
 type public UseNamedArgsAnalyzer() = 
@@ -77,7 +77,7 @@ type public UseNamedArgsAnalyzer() =
                 >>= this.filterSupported
             // We got a supported kind of method.
             // Delegate heavy-lifting to the call below.
-            let! argsWhichShouldBeNamed = getArgumentsWhichShouldBeNamed sema invocationExprSyntax
+            let! argsWhichShouldBeNamed = getArgsWhichShouldBeNamed sema invocationExprSyntax
 
             // We inspected the arguments of invocation expression.
             if argsWhichShouldBeNamed |> Seq.any then

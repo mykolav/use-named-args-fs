@@ -2,4 +2,5 @@
 
 [<EntryPoint>]
 let main args =
-    runTestsInAssembly defaultConfig args
+    let result = runTestsInAssembly defaultConfig args
+    result

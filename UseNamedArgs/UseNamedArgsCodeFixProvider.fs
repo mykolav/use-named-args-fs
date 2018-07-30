@@ -1,12 +1,18 @@
 ﻿module UseNamedArgs.CodeFixProvider
 
-open System.Composition
-open Microsoft.CodeAnalysis
-open Microsoft.CodeAnalysis.CodeFixes
 open System.Collections.Immutable
-open UseNamedArgs.Analyzer
-open FSharp.Control.Tasks.V2.ContextInsensitive
+open System.Composition
+open System.Threading
 open System.Threading.Tasks
+open Microsoft.CodeAnalysis
+open Microsoft.CodeAnalysis.CodeActions
+open Microsoft.CodeAnalysis.CodeFixes
+open Microsoft.CodeAnalysis.CSharp
+open Microsoft.CodeAnalysis.CSharp.Syntax
+open FSharp.Control.Tasks.V2.ContextInsensitive
+open UseNamedArgs.Analyzer
+open UseNamedArgs.ParameterInfo
+open UseNamedArgs.InvocationExprSyntax
 
 [<ExportCodeFixProvider(LanguageNames.CSharp, Name = "UseNamedArgsCodeFixProvider")>]
 [<Shared>]
@@ -27,99 +33,63 @@ type public UseNamedArgsCodeFixProvider() =
         let! root = context.Document.GetSyntaxRootAsync(context.CancellationToken)
         let diagnostic = context.Diagnostics |> Seq.head;
         let diagnosticSpan = diagnostic.Location.SourceSpan;
+        let invocationExprSyntax = root.FindNode(diagnosticSpan) :?> InvocationExpressionSyntax;
 
+        // Register a code action that will invoke the fix.
+        context.RegisterCodeFix(
+            CodeAction.Create(
+                title,
+                createChangedDocument = fun cancellationToken -> task {
+                    return! this.UseNamedArgumentsAsync(
+                        context.Document, 
+                        root,
+                        invocationExprSyntax, 
+                        cancellationToken) 
+                }, 
+                equivalenceKey = title),
+            diagnostic)
         return ()
     } :> Task)
 
-(*
-    [ExportCodeFixProvider(
-        LanguageNames.CSharp, 
-        Name = nameof(UseNamedArgsForParamsOfSameTypeCodeFixProvider))]
-    [Shared]
-    public class UseNamedArgsForParamsOfSameTypeCodeFixProvider : CodeFixProvider
-    {
-        public sealed override async Task RegisterCodeFixesAsync(CodeFixContext context)
-        {
-            var root = await context.Document
-                .GetSyntaxRootAsync(context.CancellationToken)
-                .ConfigureAwait(false);
+    member private this.UseNamedArgumentsAsync(document: Document,
+                                               root: SyntaxNode,
+                                               invocationExprSyntax: InvocationExpressionSyntax,
+                                               _: CancellationToken) = task {
+        let! sema = document.GetSemanticModelAsync()
 
-            var diagnostic = context.Diagnostics.First();
-            var diagnosticSpan = diagnostic.Location.SourceSpan;
+        // Figure out which exactly arguments should be converted from positional to named.
+        // As it's the named args code fix provider, there must be Some args which should be named,
+        // hence we use use Option.get to unwrap them.
+        let argsWhichShouldBeNamed = getArgsWhichShouldBeNamed sema invocationExprSyntax |> Option.get
 
-            var invocationExpressionSyntax = (InvocationExpressionSyntax)root.FindNode(diagnosticSpan);
+        // In case we have a diagnostic to get fixed, we still 
+        // don't want to force all the invocation's arguments to be named --
+        // it's up to the coder to decide on that.
+        // What we do is finding the leftmost argument that should be named
+        // and start named arguments from there.
+        let ordinalOfFirstNamedArg = argsWhichShouldBeNamed
+                                     |> Seq.collect (fun (_, args) -> args)
+                                     |> Seq.minBy (fun { Parameter = param } -> param.Ordinal)
+                                     |> fun { Parameter = param } -> param.Ordinal
 
-            // Register a code action that will invoke the fix.
-            context.RegisterCodeFix(
-                CodeAction.Create(
-                    title,
-                    createChangedDocument: cancellationToken => 
-                        UseNamedArgumentsAsync(
-                            context.Document, 
-                            root,
-                            invocationExpressionSyntax, 
-                            cancellationToken), 
-                    equivalenceKey: title),
-                diagnostic);
-        }
+        let maybeNameArg (arg: ArgumentSyntax) =
+            match sema.GetParameterInfo arg with
+            // Any argument to the right of the first named argument,
+            // should be named too -- otherwise the code won't compile.
+            | Some { Parameter = param } when param.Ordinal >= ordinalOfFirstNamedArg 
+                -> arg.WithNameColon(SyntaxFactory.NameColon(param.Name))
+                       // Preserve whitespaces, etc. from the original code.
+                      .WithTriviaFrom(arg)
+            | _ -> arg
+        
+        let originalArgList = invocationExprSyntax.ArgumentList
+        let maybeNamedArgSyntaxes = originalArgList.Arguments |> Seq.map maybeNameArg
 
-        private async Task<Document> UseNamedArgumentsAsync(
-            Document document,
-            SyntaxNode root,
-            InvocationExpressionSyntax invocationExpressionSyntax,
-            CancellationToken cancellationToken)
-        {
-            var semanticModel = await document.GetSemanticModelAsync();
-
-            // Figure out which exactly arguments should be converted from positional to named.
-            var invocationExpressionSyntaxInfo = InvocationExpressionSyntaxInfo.From(
-                semanticModel,
-                invocationExpressionSyntax);
-
-            // In case we have a diagnostic to get fixed, we still 
-            // don't want to force all the invocation's arguments to be named --
-            // it's up to the coder to decide on that.
-            // What we do is finding the leftmost argument that should be named
-            // and start named arguments from there.
-            var ordinalOfFirstNamedArgument = invocationExpressionSyntaxInfo
-                .ArgumentsWhichShouldBeNamed
-                .SelectMany(argumentsByType => argumentsByType.arguments)
-                .Min(argAndParam => argAndParam.Parameter.Ordinal);
-
-            var originalArgumentList = invocationExpressionSyntax.ArgumentList;
-            var newArgumentSyntaxes = new List<ArgumentSyntax>();
-            foreach (var originalArgument in originalArgumentList.Arguments)
-            {
-                var newArgument = originalArgument;
-
-                var argumentInfo = semanticModel.GetArgumentInfoOrThrow(originalArgument);
-                // Any argument to the right of the first named argument,
-                // should be named too -- otherwise the code won't compile.
-                if (argumentInfo.Parameter.Ordinal >= ordinalOfFirstNamedArgument)
-                { 
-                    newArgument = originalArgument
-                        .WithNameColon(
-                            SyntaxFactory.NameColon(
-                                argumentInfo.Parameter.Name.ToIdentifierName()
-                            )
-                        )
-                        // Preserve whitespaces, etc. from the original code.
-                        .WithTriviaFrom(originalArgument);
-                }
-
-                newArgumentSyntaxes.Add(newArgument);
-            }
-
-            var newArguments = SyntaxFactory.SeparatedList(
-                newArgumentSyntaxes,
-                originalArgumentList.Arguments.GetSeparators());
-
-            var newArgumentList = originalArgumentList.WithArguments(newArguments);
-            // An argument list is an "addressable" syntax element, that we can directly
-            // replace in the document's root.
-            var newRoot = root.ReplaceNode(originalArgumentList, newArgumentList);
-
-            return document.WithSyntaxRoot(newRoot);
-        }
+        let newArgumentList = originalArgList.WithArguments(
+                                 SyntaxFactory.SeparatedList(
+                                     maybeNamedArgSyntaxes,
+                                     originalArgList.Arguments.GetSeparators()))
+        // An argument list is an "addressable" syntax element, that we can directly
+        // replace in the document's root.
+        return document.WithSyntaxRoot(root.ReplaceNode(originalArgList, newArgumentList))
     }
-*)

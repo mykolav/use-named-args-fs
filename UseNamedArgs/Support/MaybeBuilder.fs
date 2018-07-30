@@ -8,3 +8,4 @@ type MaybeBuilder() =
 let maybe = new MaybeBuilder()
 
 let (>>=) m f = Option.bind f m
+let (|>>) m f = Option.map f m

@@ -20,7 +20,7 @@ open UseNamedArgs.MaybeBuilder
 open UseNamedArgs.ArgumentAndParameter
 open UseNamedArgs.ParameterInfo
 
-let getArgumentAndParameters
+let private getArgAndParams
     (sema: SemanticModel) 
     (argumentSyntaxes: SeparatedSyntaxList<ArgumentSyntax>) =
     let syntaxAndMaybeInfos = 
@@ -28,37 +28,27 @@ let getArgumentAndParameters
         |> Seq.map (fun it -> (it, sema.GetParameterInfo it))
     let folder (syntax, maybeInfo) acc = maybe {
         let! argAndParams = acc 
-        let! argInfo = maybeInfo
-        return { Argument = syntax; Parameter = argInfo.Parameter }::argAndParams
+        let! { ParameterInfo.Parameter = param } = maybeInfo
+        return { Argument = syntax; Parameter = param }::argAndParams
     }
     Seq.foldBack folder syntaxAndMaybeInfos (Some [])
 
-let getArgAndParamsGroupedByType 
-    (sema: SemanticModel) 
-    (argumentSyntaxes: SeparatedSyntaxList<ArgumentSyntax>) =
-    maybe {
-        let! argAndParams = getArgumentAndParameters sema argumentSyntaxes
-        return argAndParams |> Seq.groupBy (fun it -> it.Parameter.Type)
-    }
-
-let filterArgsWhichShouldBeNamed (argAndParamsByType: seq<ITypeSymbol * seq<ArgumentAndParameter>>) =
-    let shouldBeNamed (_, argAndParams: seq<ArgumentAndParameter>) =
-        let argAndParamHaveSameName { Argument = arg; Parameter = param } =
-            match arg.Expression with
-            | :? IdentifierNameSyntax as idName -> 
-                param.Name = idName.Identifier.ValueText
-            | _ -> false
-        let positionalArgsCount = argAndParams |> Seq.count (fun it -> isNull it.Argument.NameColon)
-        // If among a group of args of the same type only one is positional,
-        // it's impossible to accidentaly switch positions of two positional args.
-        // Hence, we don't warn/require the arg should be named.
-        positionalArgsCount > 1 &&
-        // Otherwise, there're multiple positional args.
-        // In case the identifiers of the args are the same as the names of parameters
-        // we don't warn/require the args should be named.
-        let sameNameArgsAndParamsCount = argAndParams |> Seq.count argAndParamHaveSameName
-        sameNameArgsAndParamsCount <> (Seq.length argAndParams)
-    argAndParamsByType |> Seq.filter shouldBeNamed
+let private argShouldBeNamed (_, argAndParams: seq<ArgumentAndParameter>) =
+    let argAndParamHaveSameName { Argument = arg; Parameter = param } =
+        match arg.Expression with
+        | :? IdentifierNameSyntax as idName -> 
+            param.Name = idName.Identifier.ValueText
+        | _ -> false
+    let positionalArgsCount = argAndParams |> Seq.count (fun it -> isNull it.Argument.NameColon)
+    // If among a group of args of the same type only one is positional,
+    // it's impossible to accidentaly switch positions of two positional args.
+    // Hence, we don't warn/require the arg should be named.
+    positionalArgsCount > 1 &&
+    // Otherwise, there're multiple positional args.
+    // In case the identifiers of the args are the same as the names of parameters
+    // we don't warn/require the args should be named.
+    let sameNameArgsAndParamsCount = argAndParams |> Seq.count argAndParamHaveSameName
+    sameNameArgsAndParamsCount <> (Seq.length argAndParams)
 
 /// <summary>
 /// This method analyzes the supplied <paramref name="invocationExprSyntax" />
@@ -69,15 +59,16 @@ let filterArgsWhichShouldBeNamed (argAndParamsByType: seq<ITypeSymbol * seq<Argu
 /// <returns>
 /// An option of list of arguments which should be named grouped by their types.
 /// </returns>
-let getArgumentsWhichShouldBeNamed 
+let getArgsWhichShouldBeNamed 
     (sema: SemanticModel) 
     (invocationExprSyntax: InvocationExpressionSyntax) =
     let NoArgsShouldBeNamed = Seq.ofList []
     let argSyntaxes = invocationExprSyntax.ArgumentList.Arguments
     if argSyntaxes.Count = 0 then Some NoArgsShouldBeNamed else
     maybe {
-        let! lastArgInfo = argSyntaxes |> Seq.last |> sema.GetParameterInfo
-        if lastArgInfo.Parameter.IsParams then return NoArgsShouldBeNamed else
-        let! argAndParamsByType = getArgAndParamsGroupedByType sema argSyntaxes
-        return filterArgsWhichShouldBeNamed argAndParamsByType
+        let! { Parameter = lastParam } = argSyntaxes |> Seq.last |> sema.GetParameterInfo
+        if lastParam.IsParams then return NoArgsShouldBeNamed else
+        return! getArgAndParams sema argSyntaxes 
+                |>> Seq.groupBy (fun it -> it.Parameter.Type) 
+                |>> Seq.filter argShouldBeNamed
     }

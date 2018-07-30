@@ -1,5 +1,3 @@
-# **=== UNDER CONSTRUCTION! ===**
-
 # Use named arguments for invocations of methods with multiple parameters of the same type.
 
 ## Motivation.
@@ -18,9 +16,14 @@ This analyzer looks at an invocation expression (e.g., a method call) and its ar
 - If named arguments are used for all but one parameter of the same type the analyzer doesn't emit a diagnostic. Two arguments of the same type cannot accidentally take each other's place in the described scenario. So the decision to have all the arguments named is a matter of code-style in this case and we leave it up to the developer.
 - If the last parameter is `params`, the analyzer doesn't emit a diagnostic, as we cannot use named arguments in this case.
 
+![The UseNamedArgs analyzer in action](./use-named-args-demo.gif)
+
 ## Technical details
 
 The analyzer, code-fix provider and tests are implemented in F#
+
+### TODO
+Rewrite the `UseNamedArgs.TestsSupport` project in F#
 
 # Thank you!
 

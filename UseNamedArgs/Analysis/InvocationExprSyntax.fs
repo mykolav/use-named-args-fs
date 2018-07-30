@@ -33,7 +33,7 @@ let private getArgAndParams
     }
     Seq.foldBack folder syntaxAndMaybeInfos (Some [])
 
-let private argShouldBeNamed (_, argAndParams: seq<ArgumentAndParameter>) =
+let private argsShouldBeNamed (_, argAndParams: seq<ArgumentAndParameter>) =
     let argAndParamHaveSameName { Argument = arg; Parameter = param } =
         match arg.Expression with
         | :? IdentifierNameSyntax as idName -> 
@@ -70,5 +70,5 @@ let getArgsWhichShouldBeNamed
         if lastParam.IsParams then return NoArgsShouldBeNamed else
         return! getArgAndParams sema argSyntaxes 
                 |>> Seq.groupBy (fun it -> it.Parameter.Type) 
-                |>> Seq.filter argShouldBeNamed
+                |>> Seq.filter argsShouldBeNamed
     }

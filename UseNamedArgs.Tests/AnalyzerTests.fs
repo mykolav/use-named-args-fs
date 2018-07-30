@@ -25,8 +25,7 @@ module private UseNamedArgsDiagResult =
         Line: int;
         Column: int }
 
-    let create { 
-                 InvokedMethod = invokedMethod; 
+    let create { InvokedMethod = invokedMethod; 
                  ParamNamesByType = paramNamesByType; 
                  FileName = fileName; 
                  Line = line; 

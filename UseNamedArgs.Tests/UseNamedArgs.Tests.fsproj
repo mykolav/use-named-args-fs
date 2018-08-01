@@ -7,6 +7,8 @@
 
   <ItemGroup>
     <Compile Include="Support\Assert.fs" />
+    <Compile Include="Support\DocumentFactory.fs" />
+    <Compile Include="Support\DiagnosticAnalyzerExtensions.fs" />
     <Compile Include="AnalyzerTests.fs" />
     <Compile Include="CodeFixProviderTests.fs" />
     <Compile Include="Main.fs" />

@@ -85,7 +85,7 @@ type public UseNamedArgsAnalyzer() =
                 return context.ReportDiagnostic(
                     Diagnostic.Create(
                         descriptor, 
-                        invocationExprSyntax.GetLocation(), 
+                        invocationExprSyntax.GetLocation(),
                         // messageArgs
                         methodSymbol.Name, 
                         this.formatDiagMessage argsWhichShouldBeNamed

@@ -54,8 +54,8 @@ type public UseNamedArgsCodeFixProvider() =
     member private this.UseNamedArgumentsAsync(document: Document,
                                                root: SyntaxNode,
                                                invocationExprSyntax: InvocationExpressionSyntax,
-                                               _: CancellationToken) = task {
-        let! sema = document.GetSemanticModelAsync()
+                                               cancellationToken: CancellationToken) = task {
+        let! sema = document.GetSemanticModelAsync(cancellationToken)
 
         // Figure out which exactly arguments should be converted from positional to named.
         // As it's the named args code fix provider, there must be Some args which should be named,

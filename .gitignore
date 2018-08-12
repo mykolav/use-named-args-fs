@@ -144,3 +144,6 @@ testresults.xml
 
 #NuGet packages
 *.nupkg
+
+#JetBrains Rider
+.idea/

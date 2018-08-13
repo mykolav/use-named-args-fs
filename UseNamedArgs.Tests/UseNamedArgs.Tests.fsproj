@@ -8,6 +8,7 @@
   <ItemGroup>
     <Compile Include="Support\Assert.fs" />
     <Compile Include="Support\DiagnosticResult.fs" />
+    <Compile Include="Support\UseNamedArgsDiagResult.fs" />
     <Compile Include="Support\DiagnosticFormatter.fs" />
     <Compile Include="Support\DocumentFactory.fs" />
     <Compile Include="Support\DiagnosticMatcher.fs" />

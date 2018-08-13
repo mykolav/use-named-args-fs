@@ -11,15 +11,21 @@ type DiagResultLocation = {
     Col:  uint32 }
 
 /// <summary>
-/// Struct that stores information about a Diagnostic appearing in a source
+/// Type that stores information about a Diagnostic appearing in a source
 /// </summary>
-type DiagResult(location           : DiagResultLocation option,
-                additionalLocations: DiagResultLocation list,
-                severity           : DiagnosticSeverity,
-                id                 : string,
-                message            : string) = 
+type DiagResult(severity            : DiagnosticSeverity,
+                id                  : string,
+                message             : string,
+                ?location           : DiagResultLocation,
+                ?additionalLocations: DiagResultLocation list) = 
         member val Location            = location
-        member val AdditionalLocations = additionalLocations
+        member val AdditionalLocations = defaultArg additionalLocations []
         member val Severity            = severity
         member val Id                  = id
         member val Message             = message
+
+//type DiagResult1 = { Location           : DiagResultLocation option
+//                     AdditionalLocations: seq<DiagResultLocation>
+//                     Severity           : DiagnosticSeverity
+//                     Id                 : string
+//                     Message            : string }

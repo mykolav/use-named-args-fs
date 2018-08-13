@@ -11,7 +11,8 @@
     <Compile Include="Support\DiagnosticFormatter.fs" />
     <Compile Include="Support\DocumentFactory.fs" />
     <Compile Include="Support\DiagnosticMatcher.fs" />
-    <Compile Include="Support\DiagnosticsProvider.fs" />
+    <Compile Include="Support\DiagnosticProvider.fs" />
+    <Compile Include="Support\AnalyzerExpectations.fs" />
     <Compile Include="AnalyzerTests.fs" />
     <Compile Include="CodeFixProviderTests.fs" />
     <Compile Include="Main.fs" />

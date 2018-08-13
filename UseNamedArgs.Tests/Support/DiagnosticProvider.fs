@@ -1,4 +1,4 @@
-﻿module UseNamedArgs.Tests.Support.DiagnosticsProvider
+﻿module UseNamedArgs.Tests.Support.DiagnosticProvider
 
 open System.Collections.Immutable
 open Microsoft.CodeAnalysis
@@ -16,7 +16,7 @@ type DiagnosticAnalyzer with
     /// <param name="language">The language the source classes are in</param>
     /// <param name="analyzer">The analyzer to be run on the sources</param>
     /// <returns>An IEnumerable of Diagnostics that surfaced in the source code, sorted by Location</returns>
-    member analyzer.GetSortedDiagnostics(lang: Langs, sources: string list) =
+    member analyzer.GetSortedDiagnostics(lang: Langs, sources: seq<string>) =
         analyzer.GetSortedDiagnosticsFromDocs(mkDocuments(sources, lang))
 
     /// <summary>

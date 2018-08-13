@@ -24,7 +24,7 @@ type Langs =
 /// <param name="sources">Classes in the form of strings</param>
 /// <param name="language">The language the source code is in</param>
 /// <returns>A Project created out of the Documents created from the source strings</returns>
-let private mkProject(sources: string list, lang: Langs) =
+let private mkProject(sources: seq<string>, lang: Langs) =
     let CorlibRef = MetadataReference.CreateFromFile(typedefof<obj>.Assembly.Location)
     let SystemCoreRef = MetadataReference.CreateFromFile(typedefof<Enumerable>.Assembly.Location)
     let CSharpSymbolsRef = MetadataReference.CreateFromFile(typedefof<CSharpCompilation>.Assembly.Location)
@@ -58,11 +58,11 @@ let private mkProject(sources: string list, lang: Langs) =
 /// <param name="sources">Classes in the form of strings</param>
 /// <param name="language">The language the source code is in</param>
 /// <returns>A Tuple containing the Documents produced from the sources and their TextSpans if relevant</returns>
-let mkDocuments(sources: string list, lang: Langs) =
+let mkDocuments(sources: seq<string>, lang: Langs) =
     let project = mkProject(sources, lang)
     let documents = List.ofSeq project.Documents 
 
-    if sources.Length = documents.Length 
+    if Seq.length sources = documents.Length 
     then documents
     else failwith "Amount of sources did not match amount of Documents created"
 

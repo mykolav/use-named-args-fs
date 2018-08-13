@@ -1,41 +1,52 @@
 ﻿module UseNamedArgs.Tests.AnalyzerTests
 
+open System.Text
 open Expecto
+open Support.AnalyzerExpectations
+open Support.DiagnosticResult
 open UseNamedArgs.Analyzer
-open UseNamedArgs.Assert
-open UseNamedArguments.Tests.Support
-open UseNamedArguments.Tests.Support.Analyzer.Diagnostics
 
 module private Expect =
-    let diagnostics expectedDiags code =
-        UseNamedArgsCSharpAnalyzerRunner.InvokeAndVerifyDiagnostic(
-            UseNamedArgsAnalyzer(),
-            Assert(),
-            code, 
-            expectedDiags);
+    let toBeEmittedFrom code expectedDiags =
+        Expect.diagnosticsInCSharp (UseNamedArgsAnalyzer()) [code] expectedDiags
 
-    let emptyDiagnostics = diagnostics [||]
+    let emptyDiagnostics code = [||] |> toBeEmittedFrom code
 
 [<RequireQualifiedAccess>]
 module private UseNamedArgsDiagResult =
-    type Spec = {
-        InvokedMethod: string;
-        ParamNamesByType: string seq seq;
-        FileName: string;
-        Line: int;
-        Column: int }
+    open Microsoft.CodeAnalysis
+    open System
 
-    let create { InvokedMethod = invokedMethod; 
-                 ParamNamesByType = paramNamesByType; 
-                 FileName = fileName; 
-                 Line = line; 
+    type Spec = {
+        InvokedMethod: string
+        ParamNamesByType: string seq seq
+        FileName: string
+        Line: uint32
+        Column: uint32 }
+
+    let create { InvokedMethod = invokedMethod
+                 ParamNamesByType = paramNamesByType
+                 FileName = fileName
+                 Line = line
                  Column = column } =
-        UseNamedArgumentsDiagnosticResult.Create(
-            UseNamedArgsAnalyzer.DiagnosticId,
-            UseNamedArgsAnalyzer.MessageFormat,
-            invokedMethod,
-            parameterNamesByType=paramNamesByType,
-            locations=[|DiagnosticResultLocation(fileName, line, column)|]);
+        let sbParamsDescr = StringBuilder()
+        let describeParamGroup (groupSeparator: string) 
+                               (paramGroup: seq<string>) =
+            sbParamsDescr.Append(groupSeparator)
+                         .Append(String.Join(", ", paramGroup 
+                                                   |> Seq.map (fun paramName -> "'" + paramName + "'")))
+            |> ignore
+            " and "
+        paramNamesByType |> Seq.fold describeParamGroup "" |> ignore
+        let paramsDescr = sbParamsDescr.ToString()
+        let message = String.Format(UseNamedArgsAnalyzer.MessageFormat, 
+                                    invokedMethod, 
+                                    paramsDescr)
+        let diagResult = DiagResult(id       = UseNamedArgsAnalyzer.DiagnosticId,
+                                    message  = message,
+                                    severity = DiagnosticSeverity.Warning,
+                                    location = {Path=fileName; Line=line; Col=column})
+        diagResult
 
 // TODO: Delegate. class C { void M(System.Action<int, int> f) => f(1, 2);
 // TODO: Indexer. class C { int this[int arg1, int arg2] => this[1, 2]; }
@@ -156,9 +167,9 @@ let analyzerTests =
             "
 
             let expectedDiag = UseNamedArgsDiagResult.create {
-                                   InvokedMethod="Gork";
-                                   ParamNamesByType=[[ "line"; "column" ]];
-                                   FileName="Test0.cs"; Line=9; Column=29 }
+                                   InvokedMethod="Gork"
+                                   ParamNamesByType=[[ "line"; "column" ]]
+                                   FileName="Test0.cs"; Line=9u; Column=29u }
 
-            Expect.diagnostics [|expectedDiag|] testCodeSnippet
+            [|expectedDiag|] |> Expect.toBeEmittedFrom testCodeSnippet
         } ]

@@ -10,7 +10,8 @@
     <Compile Include="Support\DiagnosticResult.fs" />
     <Compile Include="Support\DiagnosticFormatter.fs" />
     <Compile Include="Support\DocumentFactory.fs" />
-    <Compile Include="Support\DiagnosticAnalyzerExtensions.fs" />
+    <Compile Include="Support\DiagnosticMatcher.fs" />
+    <Compile Include="Support\DiagnosticsProvider.fs" />
     <Compile Include="AnalyzerTests.fs" />
     <Compile Include="CodeFixProviderTests.fs" />
     <Compile Include="Main.fs" />

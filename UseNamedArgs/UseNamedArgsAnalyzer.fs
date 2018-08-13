@@ -47,10 +47,10 @@ type public UseNamedArgsAnalyzer() =
     member private this.filterSupported (methodSymbol: IMethodSymbol) = 
         match methodSymbol.MethodKind with
         // So far we only support analyzing of the three kinds of methods listed below.
-        | (   MethodKind.Ordinary
+        |     MethodKind.Ordinary
             | MethodKind.Constructor 
-            | MethodKind.LocalFunction) -> Some methodSymbol
-        | _                             -> None
+            | MethodKind.LocalFunction -> Some methodSymbol
+        | _                            -> None
 
     member private this.formatDiagMessage argsWhichShouldBeNamed =
         let describeArgGroup 

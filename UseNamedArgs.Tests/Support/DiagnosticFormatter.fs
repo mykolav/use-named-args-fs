@@ -12,8 +12,9 @@ open UseNamedArgs.MaybeBuilder
 /// <param name="diagnostics">The Diagnostics to be formatted</param>
 /// <returns>The Diagnostics formatted as a string</returns>
 type DiagnosticAnalyzer with
-    member analyzer.Format (diags: Diagnostic list) = 
+    member analyzer.Format (diags: seq<Diagnostic>) = 
         let analyzerType = analyzer.GetType()
+        let lastDiagPos = Seq.length diags - 1
 
         let tryFindRule (diag: Diagnostic) =
             analyzer.SupportedDiagnostics |> Seq.tryFind (fun rule -> rule.Id = diag.Id)
@@ -38,10 +39,10 @@ type DiagnosticAnalyzer with
                                                 linePos.Character + 1,
                                                 analyzerType.Name,
                                                 rule.Id)
-            ((if i <> diags.Length - 1 
+            ((if i <> lastDiagPos 
               then descr.Append(',') 
               else descr).AppendLine(), i + 1)
 
-        let (description, _) = diags |> Seq.choose (fun d -> tryFindRule d |>> (fun r -> (d, r))) 
+        let (description, _) = diags |> Seq.choose (fun d -> tryFindRule d |>> fun r -> d, r) 
                                      |> Seq.fold describe (StringBuilder(), 0)
         description.ToString()

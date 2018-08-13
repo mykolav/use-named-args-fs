@@ -1,4 +1,4 @@
-﻿module UseNamedArgs.Tests.Support.DiagnosticAnalyzerExtensions
+﻿module UseNamedArgs.Tests.Support.DiagnosticsProvider
 
 open System.Collections.Immutable
 open Microsoft.CodeAnalysis

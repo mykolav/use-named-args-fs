@@ -13,14 +13,13 @@ type DiagResultLocation = {
 /// <summary>
 /// Struct that stores information about a Diagnostic appearing in a source
 /// </summary>
-type DiagResult(locations: DiagResultLocation list,
-                severity : DiagnosticSeverity,
-                id       : string,
-                message  : string) = 
-        member val Locations = locations
-        member val Severity  = severity
-        member val Id        = id
-        member val Message   = message
-        member this.Location = match locations with
-                            | hd::tl -> Some hd
-                            | _      -> None
+type DiagResult(location           : DiagResultLocation option,
+                additionalLocations: DiagResultLocation list,
+                severity           : DiagnosticSeverity,
+                id                 : string,
+                message            : string) = 
+        member val Location            = location
+        member val AdditionalLocations = additionalLocations
+        member val Severity            = severity
+        member val Id                  = id
+        member val Message             = message

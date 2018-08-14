@@ -3,18 +3,30 @@
 open Expecto
 open UseNamedArgs.Analyzer
 open UseNamedArgs.Assert
-open UseNamedArguments.Tests.Support.CodeFix
 open UseNamedArgs.CodeFixProvider
+open UseNamedArgs.Tests.Support.CodeFixExpectations
+open UseNamedArgs.Tests.Support.DocumentFactory
 
 [<RequireQualifiedAccess>]
 module private Expect =
+    let formatSource (source: string) =
+        sprintf "
+            namespace Frobnitz
+            {
+                class Wombat
+                {
+                    %s
+                }
+            }
+        " source
+
     let toBeFixedAndMatch fixedCodeSnippet originalCodeSnippet =
-        UseNamedArgsCSharpCodeFixRunner.InvokeAndVerifyResult(
-            UseNamedArgsCodeFixProvider(),
-            Assert(),
-            UseNamedArgsAnalyzer(),
-            originalCodeSnippet, 
-            fixedCodeSnippet);
+        let fixedCodeSnippet = formatSource fixedCodeSnippet
+        let originalCodeSnippet = formatSource originalCodeSnippet
+        Expect.toMatchFixedCode (UseNamedArgsAnalyzer()) (UseNamedArgsCodeFixProvider())
+                                CSharp originalCodeSnippet
+                                None false
+                                fixedCodeSnippet
 
 // TODO: Delegate. class C { void M(System.Action<int, int> f) => f(1, 2);
 // TODO: Indexer. class C { int this[int arg1, int arg2] => this[1, 2]; }
@@ -31,7 +43,7 @@ let codeFixProviderTests =
                     void Gork(string fileName, int line, int column) {}
                     void Bork()
                     {
-                        Gork(""Gizmo.cs"", 9000, 1);
+                        _Gork(""Gizmo.cs"", 9000, 1);
                     }
                 "
 

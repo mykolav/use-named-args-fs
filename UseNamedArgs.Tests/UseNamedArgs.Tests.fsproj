@@ -16,7 +16,7 @@
     <Compile Include="Analyzer\UseNamedArgsDiagResult.fs" />
     <Compile Include="Analyzer\AnalyzerTests.fs" />
     <Compile Include="CodeFix\CodeFixExpectations.fs" />
-    <Compile Include="CodeFixProviderTests.fs" />
+    <Compile Include="CodeFix\CodeFixProviderTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
 

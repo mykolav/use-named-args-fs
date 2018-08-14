@@ -8,13 +8,14 @@
   <ItemGroup>
     <Compile Include="Support\Assert.fs" />
     <Compile Include="Support\DiagnosticResult.fs" />
-    <Compile Include="Support\UseNamedArgsDiagResult.fs" />
     <Compile Include="Support\DiagnosticFormatter.fs" />
     <Compile Include="Support\DocumentFactory.fs" />
     <Compile Include="Support\DiagnosticMatcher.fs" />
     <Compile Include="Support\DiagnosticProvider.fs" />
-    <Compile Include="Support\AnalyzerExpectations.fs" />
-    <Compile Include="AnalyzerTests.fs" />
+    <Compile Include="Support\DocumentExtensions.fs" />
+    <Compile Include="Analyzer\UseNamedArgsDiagResult.fs" />
+    <Compile Include="Analyzer\AnalyzerTests.fs" />
+    <Compile Include="CodeFix\CodeFixExpectations.fs" />
     <Compile Include="CodeFixProviderTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>

@@ -1,25 +1,18 @@
 ﻿module UseNamedArgs.Tests.Support.UseNamedArgsDiagResult
 
-[<RequireQualifiedAccess>]
-module UseNamedArgsDiagResult =
-    open System
-    open System.Text
-    open Microsoft.CodeAnalysis
-    open DiagnosticResult
-    open UseNamedArgs.Analyzer
+open System
+open System.Text
+open Microsoft.CodeAnalysis
+open DiagnosticResult
+open UseNamedArgs.Analyzer
 
-    type Spec = {
-        InvokedMethod: string
-        ParamNamesByType: string seq seq
-        FileName: string
-        Line: uint32
-        Column: uint32 }
+type UseNamedArgsDiagResult() =
 
-    let create { InvokedMethod = invokedMethod
-                 ParamNamesByType = paramNamesByType
-                 FileName = fileName
-                 Line = line
-                 Column = column } =
+    static member Create(invokedMethod: string,
+                         paramNamesByType: string seq seq,
+                         fileName: string,
+                         line: uint32,
+                         column: uint32) =
         let sbParamsDescr = StringBuilder()
         let describeParamGroup (groupSeparator: string) 
                                (paramGroup: seq<string>) =
@@ -38,4 +31,3 @@ module UseNamedArgsDiagResult =
                                     severity = DiagnosticSeverity.Warning,
                                     location = {Path=fileName; Line=line; Col=column})
         diagResult
-

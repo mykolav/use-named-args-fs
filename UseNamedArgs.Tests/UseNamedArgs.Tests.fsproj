@@ -6,7 +6,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Support\Assert.fs" />
     <Compile Include="Support\DiagnosticResult.fs" />
     <Compile Include="Support\DiagnosticFormatter.fs" />
     <Compile Include="Support\DocumentFactory.fs" />
@@ -26,7 +25,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\UseNamedArgs.TestsSupport\UseNamedArgs.TestsSupport.csproj" />
     <ProjectReference Include="..\UseNamedArgs\UseNamedArgs.fsproj" />
   </ItemGroup>
 

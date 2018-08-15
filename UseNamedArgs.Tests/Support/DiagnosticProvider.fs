@@ -42,4 +42,5 @@ type DiagnosticAnalyzer with
                                                                      .Result)
                        |> Seq.filter shouldTake
                        |> Seq.sortBy (fun diag -> diag.Location.SourceSpan.Start)
+                       |> List.ofSeq
         sortedDiags

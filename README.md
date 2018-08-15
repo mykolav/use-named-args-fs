@@ -22,9 +22,6 @@ This analyzer looks at an invocation expression (e.g., a method call) and its ar
 
 The analyzer, code-fix provider and tests are implemented in F#
 
-### TODO
-Rewrite the `UseNamedArgs.TestsSupport` project in F#
-
 # Thank you!
 
 - [John Koerner](https://github.com/johnkoerner) for [Creating a Code Analyzer using F#](https://johnkoerner.com/code-analysis/creating-a-code-analyzer-using-f/)

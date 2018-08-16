@@ -138,4 +138,4 @@ module Expect =
             let actualFixedSource = fixedDoc.ToSourceCode().Replace("\r\n", "\n")
             let expectedFixedSource = expectedSource.Replace("\r\n", "\n")
             return Expect.equal actualFixedSource expectedFixedSource ""
-        }
+        } |> ignore

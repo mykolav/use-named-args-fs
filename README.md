@@ -1,6 +1,6 @@
 # Use named arguments for invocations of methods with multiple parameters of the same type.
 
-## Motivation.
+## Motivation
 
 Quoting from this [comment](https://github.com/dotnet/roslyn-analyzers/issues/1216#issuecomment-304967649
 ) in a [new analyzer request](https://github.com/dotnet/roslyn-analyzers/issues/1216#issuecomment-304967649).

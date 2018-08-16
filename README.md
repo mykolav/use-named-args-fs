@@ -1,4 +1,4 @@
-# Use named arguments for invocations of methods with multiple parameters of the same type.
+# Use named arguments for invocations of methods with multiple parameters of the same type
 
 ## Motivation
 
@@ -9,7 +9,33 @@ Quoting from this [comment](https://github.com/dotnet/roslyn-analyzers/issues/12
 > when you have successive parameters of the same type 
 > (or convertible to same type with implicit conversions).
 
-## How does it work?
+## Download and install
+
+Install the [UseNamedArgs](https://www.nuget.org/packages/UseNamedArgs) nuget package.
+For example, run the following command in the [NuGet Package Manager Console](https://docs.microsoft.com/en-us/nuget/tools/package-manager-console).
+
+```powershell
+Install-Package UseNamedArgs
+```
+   
+This will download all the binaries, and add necessary analyzer references to your project.
+
+## How to use it?
+
+Once the nuget package is installed in a project it will analyze invocation expressions and emit a warning if the invocation should use named arguments.  
+The rules to decide if an argumetn should be named are described in the [How does it work?](#how-does-it-work) section.
+
+For example:
+```csharp
+public static void SetBookmark(string fileName, int line, int column) {}
+
+// Elsewhere in your code:
+// if `SetBookmark` method is called with positional arguments,
+// the analyzer will emit a warning.
+SetBookmark(fileName: "Program.cs", line: 9000, column: 1);
+```
+
+## <a name="how-does-it-work"></a> How does it work?
 
 This analyzer looks at an invocation expression (e.g., a method call) and its arguments and suggests using named arguments according to the following rules:
 - If a method or ctor has a number of parameters of the same type the invocation's corresponding arguments should be named.

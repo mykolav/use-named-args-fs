@@ -22,6 +22,10 @@ module Expect =
     /// Note: Considers Diagnostics to be the same if they have the same Ids.
     ///       In the case of multiple diagnostics with the same Id in a row,
     ///       this method may not necessarily return the new one.
+    /// Note: This method was rewritten from scratch as opposed to translating from its C# counterpart.
+    ///       It's not entirely clear how the original method was supposed to work.
+    ///       For details see 
+    ///         <see href="https://github.com/dotnet/roslyn-analyzers/issues/1787">this question in the roslyn-analyzers repo</see>
     /// </summary>
     /// <param name="diagnostics">The Diagnostics that existed in the code before the CodeFix was applied</param>
     /// <param name="newDiagnostics">The Diagnostics that exist in the code after the CodeFix was applied</param>

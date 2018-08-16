@@ -20,10 +20,7 @@ This analyzer looks at an invocation expression (e.g., a method call) and its ar
 
 ## Technical details
 
-The analyzer, code-fix provider and tests are implemented in F#
-
-### TODO
-Rewrite the `UseNamedArgs.TestsSupport` project in F#
+The analyzer, code-fix provider, and tests are implemented in F#
 
 # Thank you!
 

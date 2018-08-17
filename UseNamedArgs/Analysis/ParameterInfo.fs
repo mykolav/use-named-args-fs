@@ -1,6 +1,7 @@
 ﻿module UseNamedArgs.ParameterInfo
 
 open System
+open System.Collections.Immutable
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open UseNamedArgs.CSharpAdapters
@@ -10,17 +11,24 @@ type ParameterInfo = {
     MethodOrProperty : ISymbol;
     Parameter : IParameterSymbol }
 
+type ISymbol with
+    member symbol.GetParameters() =
+        match symbol with
+        | :? IMethodSymbol as s   -> s.Parameters
+        | :? IPropertySymbol as s -> s.Parameters
+        | _                       -> ImmutableArray<IParameterSymbol>.Empty
+        |> Seq.toList
+
 /// <summary>
 /// To be able to convert positional arguments to named we need to find
 /// corresponding <see cref="IParameterSymbol" /> for each argument.
 /// </summary>
 type SemanticModel with
-    member sema.GetParameterInfo (argumentOrNull: ArgumentSyntax) =
+    member sema.GetParameterInfo (argument: ArgumentSyntax) =
         maybe {
-            let! argument = Option.ofObj argumentOrNull
-            let! argList = argument.Parent |> Option.ofType<ArgumentListSyntax>
-            let! exprSyntax = argList.Parent  |> Option.ofType<ExpressionSyntax>
-            let! methodOrProperty = sema.GetSymbolInfo(exprSyntax).Symbol |> Option.ofType<ISymbol>
+            let argList = argument.Parent :?> ArgumentListSyntax
+            let exprSyntax = argList.Parent  :?> ExpressionSyntax
+            let methodOrProperty = sema.GetSymbolInfo(exprSyntax).Symbol
             let! parameters = methodOrProperty.GetParameters() |> Option.ofList
             if isNull argument.NameColon then
                 // A positional argument.

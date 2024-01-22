@@ -1,27 +1,24 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <Compile Include="Support\TaskBuilder.fs" />
-    <Compile Include="Support\SeqExtensions.fs" />
-    <Compile Include="Support\CSharpAdapters.fs" />
-    <Compile Include="Support\MaybeBuilder.fs" />
-    <Compile Include="Analysis\ParameterInfo.fs" />
-    <Compile Include="Analysis\ArgumentAndParameter.fs" />
-    <Compile Include="Analysis\InvocationExprSyntax.fs" />
-    <Compile Include="UseNamedArgsAnalyzer.fs" />
-    <Compile Include="UseNamedArgsCodeFixProvider.fs" />
-  </ItemGroup>
+    <ItemGroup>
+        <Compile Include="Support\TaskBuilder.fs"/>
+        <Compile Include="Support\SeqExtensions.fs"/>
+        <Compile Include="Support\CSharpAdapters.fs"/>
+        <Compile Include="Support\MaybeBuilder.fs"/>
+        <Compile Include="Analysis\ParameterInfo.fs"/>
+        <Compile Include="Analysis\ArgumentAndParameter.fs"/>
+        <Compile Include="Analysis\InvocationExprSyntax.fs"/>
+        <Compile Include="UseNamedArgsAnalyzer.fs"/>
+        <Compile Include="UseNamedArgsCodeFixProvider.fs"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis" Version="2.8.2" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Update="FSharp.Core" Version="4.5.2" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.CodeAnalysis" Version="4.4.0"/>
+        <PackageReference Update="FSharp.Core" Version="4.5.2"/>
+    </ItemGroup>
 
 </Project>

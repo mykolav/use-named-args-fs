@@ -1,13 +1,33 @@
-# Use named arguments for invocations of methods with multiple parameters of the same type
+# Suggest methods that can benefit from calling them with named arguments
 
-## Motivation
+<!-- [![Build status](https://ci.appveyor.com/api/projects/status/uucjd3ti7tjmmn9d?svg=true)](https://ci.appveyor.com/project/mykolav/use-named-args-fs) -->
 
-Quoting from this [comment](https://github.com/dotnet/roslyn-analyzers/issues/1216#issuecomment-304967649
-) in a [new analyzer request](https://github.com/dotnet/roslyn-analyzers/issues/1216#issuecomment-304967649).
+This project contains a Roslyn code analyzer and an accompanying code-fix provider that suggest using named arguments when calling a method having successive parameters of the same type.
 
-> [...] analyzer here would enforce used of named arguments 
-> when you have successive parameters of the same type 
-> (or convertible to same type with implicit conversions).
+![The UseNamedArgs analyzer in action](./use-named-args-demo.gif)
+
+## How to use it?
+
+Just install the [nuget package](https://www.nuget.org/packages/UseNamedArgs/). The analyzer is going to look for method invocations that can benefit from named arguments across the project.
+
+```csharp
+public static void IntroduceCharacter(string name, string powerLevel) {}
+
+// Elsewhere in your code:
+// if `IntroduceCharacter` method is called with positional arguments,
+// the analyzer emits a warning, as the the method has two parameters 
+// of the same type following one another.
+IntroduceCharacter(name: "Goku", powerLevel: "Over 9000!");
+```
+
+### Supported method kinds
+
+The analyzer supports suggesting named arguments for the following method kinds  
+- Regular instance and static methods
+- Extension methods
+- Regular constructors
+- Attribute constructors
+- Primary constructors 
 
 ## Download and install
 
@@ -17,36 +37,30 @@ For example, run the following command in the [NuGet Package Manager Console](ht
 ```powershell
 Install-Package UseNamedArgs
 ```
-   
+
 This will download all the binaries, and add necessary analyzer references to your project.
 
-## How to use it?
+## Configuration
 
-Once the nuget package is installed in a project it will analyze invocation expressions and emit a warning if the invocation should use named arguments.  
-The rules to decide if an argumetn should be named are described in the [How does it work?](#how-does-it-work) section.
+Starting in Visual Studio 2019 version 16.3, you can [configure the severity of analyzer rules, or diagnostics](https://learn.microsoft.com/en-us/visualstudio/code-quality/use-roslyn-analyzers?view=vs-2022#configure-severity-levels), in an EditorConfig file, from the light bulb menu, and the error list.
 
-For example:
-```csharp
-public static void SetBookmark(string fileName, int line, int column) {}
+You can add the following to the `[*.cs]` section of your .editorconfig.
 
-// Elsewhere in your code:
-// if `SetBookmark` method is called with positional arguments,
-// the analyzer will emit a warning.
-SetBookmark(fileName: "Program.cs", line: 9000, column: 1);
+```ini
+[*.cs]
+dotnet_diagnostic.UseNamedArgs.severity = suggestion
 ```
 
-## <a name="how-does-it-work"></a> How does it work?
+The possible severity values are:
+- `error`
+- `warning`
+- `suggestion`
+- `silent`
+- `none`
+- `default` (in case of this analyzer, it's equal to `warning`)
 
-This analyzer looks at an invocation expression (e.g., a method call) and its arguments and suggests using named arguments according to the following rules:
-- If a method or ctor has a number of parameters of the same type the invocation's corresponding arguments should be named.
-- If named arguments are used for all but one parameter of the same type the analyzer doesn't emit a diagnostic. Two arguments of the same type cannot accidentally take each other's place in the described scenario. So the decision to have all the arguments named is a matter of code-style in this case and we leave it up to the developer.
-- If the last parameter is `params`, the analyzer doesn't emit a diagnostic, as we cannot use named arguments in this case.
+Please take a look at [the documentation](https://learn.microsoft.com/en-us/visualstudio/code-quality/use-roslyn-analyzers?view=vs-2022#configure-severity-levels) for a detailed description.
 
-![The UseNamedArgs analyzer in action](./use-named-args-demo.gif)
-
-## Technical details
-
-The analyzer, code-fix provider, and tests are implemented in F#
 
 # Thank you!
 
@@ -56,5 +70,4 @@ The analyzer, code-fix provider, and tests are implemented in F#
 
 # License
 
-The [UseNamedArgs](https://github.com/mykolav/use-named-args-fs) analyzer and code-fix provider are licensed under the MIT license.  
-So they can be used freely in commercial applications.
+The analyzer and code-fix provider are licensed under the MIT license.

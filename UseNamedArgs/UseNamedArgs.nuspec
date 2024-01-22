@@ -1,30 +1,34 @@
 <?xml version="1.0"?>
-<package >
-  <metadata>
-    <id>UseNamedArgs</id>
-    <version>0.0.1</version>
-    <authors>Mykola Musiienko</authors>
-    <owners>Mykola Musiienko</owners>
-    <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <licenseUrl>https://github.com/mykolav/use-named-args-fs/blob/master/LICENSE</licenseUrl>
-    <projectUrl>https://github.com/mykolav/use-named-args-fs</projectUrl>
-    <iconUrl>https://avatars1.githubusercontent.com/u/14280254</iconUrl>
-    <description>"Use named arguments" Roslyn code analyzer and code-fix provider for C#</description>
-    <copyright>Copyright © Mykola Musiienko 2018</copyright>
-    <tags>roslyn roslyn-analyzer</tags>
-    <repository url="https://github.com/mykolav/use-named-args-fs" />
-    <releaseNotes>Initial release</releaseNotes>  
+<package>
+    <metadata>
+        <id>UseNamedArgs</id>
+        <version>0.0.2</version>
+        <authors>Mykola Musiienko</authors>
+        <owners>Mykola Musiienko</owners>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <licenseUrl>https://github.com/mykolav/use-named-args-fs/blob/master/LICENSE</licenseUrl>
+        <projectUrl>https://github.com/mykolav/use-named-args-fs</projectUrl>
+        <iconUrl>https://avatars1.githubusercontent.com/u/14280254</iconUrl>
+        <description>"Use named arguments" Roslyn code analyzer and code-fix provider for C#</description>
+        <copyright>Copyright © Mykola Musiienko 2018</copyright>
+        <tags>roslyn roslyn-analyzer</tags>
+        <repository url="https://github.com/mykolav/use-named-args-fs"/>
+        <releaseNotes>A maintenance release</releaseNotes>
 
-  <dependencies>
-    <group>
-      <dependency id="FSharp.Core" version="4.5.2" />
-    </group>
-  </dependencies>  
-  </metadata>
-  <files>
-    <file src="bin\Release\netstandard2.0\UseNamedArgs.dll" target="analyzers\dotnet\cs\" />
-    <file src="bin\Release\netstandard2.0\UseNamedArgs.pdb" target="analyzers\dotnet\cs\" />
-    <file src="tools\*.ps1" target="tools\" />
-  </files>
+        <dependencies>
+            <group>
+                <dependency id="FSharp.Core" version="4.5.2"/>
+            </group>
+        </dependencies>
+    </metadata>
+    <files>
+        <file src="bin\Release\netstandard2.0\UseNamedArgs.dll" target="analyzers\dotnet\cs\"/>
+        <file src="bin\Release\netstandard2.0\UseNamedArgs.pdb" target="analyzers\dotnet\cs\"/>
+        <file src="tools\*.ps1" target="tools\"/>
+        <file src="..\dependencies\FSharp.Core.dll" target="analyzers\dotnet\cs\"/>
+        <file src="tools\*.ps1" target="tools\"/>
+        <file src="..\LICENS*" target=""/>
+        <file src="..\icon.png" target=""/>
+    </files>
 
 </package>

@@ -1,6 +1,6 @@
 # Suggest methods that can benefit from calling them with named arguments
 
-<!-- [![Build status](https://ci.appveyor.com/api/projects/status/uucjd3ti7tjmmn9d?svg=true)](https://ci.appveyor.com/project/mykolav/use-named-args-fs) -->
+[![Build status](https://ci.appveyor.com/api/projects/status/kr7293hw0oswn9fn?svg=true)](https://ci.appveyor.com/project/mykolav/use-named-args-fs)
 
 This project contains a Roslyn code analyzer and an accompanying code-fix provider that suggest using named arguments when calling a method having successive parameters of the same type.
 

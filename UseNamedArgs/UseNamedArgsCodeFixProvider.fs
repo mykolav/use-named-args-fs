@@ -1,4 +1,5 @@
-﻿module UseNamedArgs.CodeFixProvider
+﻿namespace UseNamedArgs.CodeFixProvider
+
 
 open System.Collections.Immutable
 open System.Composition
@@ -7,89 +8,144 @@ open System.Threading.Tasks
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CodeActions
 open Microsoft.CodeAnalysis.CodeFixes
-open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open FSharp.Control.Tasks.V2.ContextInsensitive
 open UseNamedArgs.Analyzer
-open UseNamedArgs.ParameterInfo
-open UseNamedArgs.InvocationExprSyntax
+open UseNamedArgs.Analysis
+open UseNamedArgs.Analysis.SemanticModelParameterInfoExtensions
+open UseNamedArgs.Analysis.SyntaxNodeArgumentExtensions
+
+
+type private UseNamedArgsCodeFixContext =
+    { Document:   Document
+      SyntaxRoot: SyntaxNode
+      Sema:       SemanticModel
+      Ct:         CancellationToken }
+
 
 [<ExportCodeFixProvider(LanguageNames.CSharp, Name = "UseNamedArgsCodeFixProvider")>]
 [<Shared>]
-type public UseNamedArgsCodeFixProvider() = 
+type public UseNamedArgsCodeFixProvider() =
     inherit CodeFixProvider()
 
-    static let title = "Use named args for params of same type"
-    
+
+    static let Title = "Use named arguments"
+
+
     // This tells the infrastructure that this code-fix provider corresponds to
     // the `UseNamedArgsAnalyzer` analyzer.
-    override val FixableDiagnosticIds = ImmutableArray.Create(UseNamedArgsAnalyzer.DiagnosticId)
+    override val FixableDiagnosticIds = ImmutableArray.Create(DiagnosticDescriptors.NamedArgumentsSuggested.Id)
 
-    // See https://github.com/dotnet/roslyn/blob/master/docs/analyzers/FixAllProvider.md 
+
+    // See https://github.com/dotnet/roslyn/blob/master/docs/analyzers/FixAllProvider.md
     // for more information on Fix All Providers
     override this.GetFixAllProvider() = WellKnownFixAllProviders.BatchFixer
 
-    override this.RegisterCodeFixesAsync(context) = (task {
-        let! root = context.Document.GetSyntaxRootAsync(context.CancellationToken)
-        let diagnostic = context.Diagnostics |> Seq.head;
-        let diagnosticSpan = diagnostic.Location.SourceSpan;
-        let invocationExprSyntax = root.FindNode(diagnosticSpan) :?> InvocationExpressionSyntax;
+
+    override this.RegisterCodeFixesAsync(context: CodeFixContext) = (task {
+        let! syntaxRoot = context.Document.GetSyntaxRootAsync(context.CancellationToken)
+
+        let diagnostic = Seq.head context.Diagnostics
+        let syntaxNode = syntaxRoot.FindNode(diagnostic.Location.SourceSpan)
+
+        let! sema = context.Document.GetSemanticModelAsync(context.CancellationToken)
 
         // Register a code action that will invoke the fix.
         context.RegisterCodeFix(
             CodeAction.Create(
-                title,
+                Title,
                 createChangedDocument = fun cancellationToken -> task {
-                    return! this.UseNamedArgumentsAsync(
-                        context.Document, 
-                        root,
-                        invocationExprSyntax, 
-                        cancellationToken) 
-                }, 
-                equivalenceKey = title),
+                    return! this.UseNamedArguments(
+                        { Document   = context.Document
+                          SyntaxRoot = syntaxRoot
+                          Sema       = sema
+                          Ct         = cancellationToken  },
+                        syntaxNode)
+                },
+                equivalenceKey = Title),
             diagnostic)
         return ()
     } :> Task)
 
-    member private this.UseNamedArgumentsAsync(document: Document,
-                                               root: SyntaxNode,
-                                               invocationExprSyntax: InvocationExpressionSyntax,
-                                               cancellationToken: CancellationToken) = task {
-        let! sema = document.GetSemanticModelAsync(cancellationToken)
 
-        // Figure out which exactly arguments should be converted from positional to named.
-        // As it's the named args code fix provider, there must be Some args which should be named,
-        // hence we use use Option.get to unwrap them.
-        let argsWhichShouldBeNamed = getArgsWhichShouldBeNamed sema invocationExprSyntax |> Option.get
+    member private this.UseNamedArguments(context: UseNamedArgsCodeFixContext,
+                                          currentSyntaxNode: SyntaxNode)
+                                         : Task<Document> = task {
+        let invocationAnalysis = InvocationAnalysis.Of(context.Sema, currentSyntaxNode)
+        match invocationAnalysis with
+        | StopAnalysis ->
+            return context.Document
 
-        // In case we have a diagnostic to get fixed, we still 
-        // don't want to force all the invocation's arguments to be named --
-        // it's up to the coder to decide on that.
-        // What we do is finding the leftmost argument that should be named
-        // and start named arguments from there.
-        let ordinalOfFirstNamedArg = argsWhichShouldBeNamed
-                                     |> Seq.collect (fun (_, args) -> args)
-                                     |> Seq.minBy (fun { Parameter = param } -> param.Ordinal)
-                                     |> fun { Parameter = param } -> param.Ordinal
+        | OK invocationAnalysis ->
+            let suggestedNamedArguments = invocationAnalysis.SuggestNamedArgument()
+            match suggestedNamedArguments with
+            | StopAnalysis ->
+                return context.Document
 
-        let maybeNameArg (arg: ArgumentSyntax) =
-            match sema.GetParameterInfo arg with
-            // Any argument to the right of the first named argument,
-            // should be named too -- otherwise the code won't compile.
-            | Some { Parameter = param } when param.Ordinal >= ordinalOfFirstNamedArg 
-                -> arg.WithNameColon(SyntaxFactory.NameColon(param.Name))
-                       // Preserve whitespaces, etc. from the original code.
-                      .WithTriviaFrom(arg)
-            | _ -> arg
-        
-        let originalArgList = invocationExprSyntax.ArgumentList
-        let maybeNamedArgSyntaxes = originalArgList.Arguments |> Seq.map maybeNameArg
+            | OK suggestedNamedArguments ->
+                if Array.isEmpty suggestedNamedArguments
+                then
+                    return context.Document
+                else
 
-        let newArgumentList = originalArgList.WithArguments(
-                                 SyntaxFactory.SeparatedList(
-                                     maybeNamedArgSyntaxes,
-                                     originalArgList.Arguments.GetSeparators()))
+                return! this.ReplaceWithNamedArguments(context,
+                                                       // `syntaxNode.ArgumentList` must be present
+                                                       // otherwise we wouldn't get to this point in code.
+                                                       currentSyntaxNode.ArgumentList.Value,
+                                                       suggestedNamedArguments)
+    }
+
+
+    member private this.ReplaceWithNamedArguments(context: UseNamedArgsCodeFixContext,
+                                                  argumentList: IArgumentListSyntax,
+                                                  argumentsToReplace: ArgumentInfo[])
+                                                 : Task<Document> = task {
+        match argumentList with
+        | :? IArgumentListSyntax<ArgumentSyntax> as list ->
+            return! this.DoReplaceWithNamedArguments(context, list, argumentsToReplace)
+
+        | :? IArgumentListSyntax<AttributeArgumentSyntax> as list ->
+            return! this.DoReplaceWithNamedArguments(context, list, argumentsToReplace)
+
+        | _ ->
+            return context.Document
+    }
+
+
+    member private this.DoReplaceWithNamedArguments<'T when 'T :> SyntaxNode>(
+        context: UseNamedArgsCodeFixContext,
+        list: IArgumentListSyntax<'T>,
+        argumentsToReplace: ArgumentInfo[])
+        : Task<Document> = task {
+
+        // We are replacing some positional arguments with named.
+        // But we still don't want to force all the arguments to be named.
+        // It's up to the user whether they want all the arguments named or only some.
+        //
+        // Therefore we don't touch any arguments to
+        // the left of the first argument that should be named.
+        let ordinalOfFirstNamed = argumentsToReplace[0].ParameterSymbol.Ordinal
+        let parentSymbol = context.Sema.GetSymbolInfo(list.Parent, context.Ct).Symbol
+
+        let withName(position: int, argument: IArgumentSyntax<'T>): 'T =
+            match context.Sema.GetParameterInfo(parentSymbol, position, argument.NameColon) with
+            | None    -> argument.Syntax
+            | Some pi ->
+                if pi.Symbol.Ordinal < ordinalOfFirstNamed
+                then
+                    argument.Syntax
+                else
+                    argument.WithNameColon(pi.Symbol.Name)
+                            .WithTriviaFrom(argument.Syntax)
+
+        let argumentWithNames =
+            list.Arguments
+            |> Seq.mapi (fun position argument -> withName(position, argument))
+
+        let listWithNamedArguments = list.WithArguments(argumentWithNames)
+
         // An argument list is an "addressable" syntax element, that we can directly
         // replace in the document's root.
-        return document.WithSyntaxRoot(root.ReplaceNode(originalArgList, newArgumentList))
+        return context.Document.WithSyntaxRoot(
+            context.SyntaxRoot.ReplaceNode(list.Syntax, listWithNamedArguments.Syntax))
     }

@@ -1,10 +1,20 @@
 ﻿module UseNamedArgs.Tests.Support.DocumentExtensions
 
+
 open System.Threading
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CodeActions
 open Microsoft.CodeAnalysis.Formatting
 open Microsoft.CodeAnalysis.Simplification
+
+
+[<RequireQualifiedAccess>]
+module private Seq =
+    let ofType<'T> source =
+        source |> Seq.choose (fun it -> match box it with
+                                        | :? 'T as a -> Some a
+                                        | _          -> None)
+
 
 type Document with
     /// <summary>
@@ -20,7 +30,7 @@ type Document with
                                   |> Seq.exactlyOne
                                   |> fun it -> it.ChangedSolution
         solution.GetDocument(this.Id)
-    
+
     /// <summary>
     /// Get the existing compiler diagnostics on the inputted document.
     /// </summary>
@@ -36,7 +46,7 @@ type Document with
     member this.ToSourceCode() =
         let simplifiedDoc = Simplifier.ReduceAsync(this, Simplifier.Annotation).Result
         let root = simplifiedDoc.GetSyntaxRootAsync().Result
-        let formattedRoot = Formatter.Format(root, 
-                                             Formatter.Annotation, 
+        let formattedRoot = Formatter.Format(root,
+                                             Formatter.Annotation,
                                              simplifiedDoc.Project.Solution.Workspace)
         formattedRoot.GetText().ToString()

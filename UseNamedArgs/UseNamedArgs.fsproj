@@ -6,13 +6,11 @@
 
     <ItemGroup>
         <Compile Include="Support\TaskBuilder.fs"/>
-        <Compile Include="Support\SeqExtensions.fs"/>
-        <Compile Include="Support\CSharpAdapters.fs"/>
-        <Compile Include="Support\MaybeBuilder.fs"/>
+        <Compile Include="Analysis\ArgumentSyntaxNode.fs" />
         <Compile Include="Analysis\ParameterInfo.fs"/>
-        <Compile Include="Analysis\ArgumentAndParameter.fs"/>
-        <Compile Include="Analysis\InvocationExprSyntax.fs"/>
-        <Compile Include="UseNamedArgsAnalyzer.fs"/>
+        <Compile Include="Analysis\InvocationAnalysis.fs" />
+        <Compile Include="DiagnosticDescriptors.fs" />
+        <Compile Include="UseNamedArgsAnalyzer.fs" />
         <Compile Include="UseNamedArgsCodeFixProvider.fs"/>
     </ItemGroup>
 

@@ -14,19 +14,19 @@ type UseNamedArgsDiagResult() =
                          line: uint32,
                          column: uint32) =
         let sbParamsDescr = StringBuilder()
-        let describeParamGroup (groupSeparator: string) 
+        let describeParamGroup (groupSeparator: string)
                                (paramGroup: seq<string>) =
             sbParamsDescr.Append(groupSeparator)
-                         .Append(String.Join(", ", paramGroup 
+                         .Append(String.Join(", ", paramGroup
                                                    |> Seq.map (fun paramName -> "'" + paramName + "'")))
             |> ignore
             " and "
         paramNamesByType |> Seq.fold describeParamGroup "" |> ignore
         let paramsDescr = sbParamsDescr.ToString()
-        let message = String.Format(UseNamedArgsAnalyzer.MessageFormat, 
-                                    invokedMethod, 
+        let message = String.Format(DiagnosticDescriptors.NamedArgumentsSuggested.MessageFormat.ToString(),
+                                    invokedMethod,
                                     paramsDescr)
-        let diagResult = DiagResult(id       = UseNamedArgsAnalyzer.DiagnosticId,
+        let diagResult = DiagResult(id       = DiagnosticDescriptors.NamedArgumentsSuggested.Id,
                                     message  = message,
                                     severity = DiagnosticSeverity.Warning,
                                     location = {Path=fileName; Line=line; Col=column})

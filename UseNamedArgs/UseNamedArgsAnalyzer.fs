@@ -3,97 +3,84 @@ namespace UseNamedArgs.Analyzer
 
 open System
 open System.Collections.Immutable
-open System.Text
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
-open Microsoft.CodeAnalysis.CSharp.Syntax
 open Microsoft.CodeAnalysis.Diagnostics
-open UseNamedArgs.ArgumentAndParameter // Actually it's used
-open UseNamedArgs.CSharpAdapters
-open UseNamedArgs.InvocationExprSyntax
-open UseNamedArgs.MaybeBuilder
+open UseNamedArgs.Analysis
+open UseNamedArgs.Analyzer
 
 
 [<DiagnosticAnalyzer(LanguageNames.CSharp)>]
 type public UseNamedArgsAnalyzer() =
     inherit DiagnosticAnalyzer()
 
-    static let diagnosticId = "UseNamedArgs"
-    static let messageFormat = "Consider invoking '{0}' with named arguments"
-    static let description = "Methods having successive parameters of the same type can benefit from named arguments"
-    static let descriptor =
-        DiagnosticDescriptor(
-            diagnosticId,
-            "Suggest invoking methods with named arguments" (*title*),
-            messageFormat,
-            "Naming" (*category*),
-            DiagnosticSeverity.Warning (*defaultSeverity*),
-            true (*isEnabeledByDefault*),
-            description,
-            null (*helpLinkUri*))
 
-    static member DiagnosticId = diagnosticId
-    static member MessageFormat = messageFormat
+    let joinParameterNames (argumentWithMissingNames: seq<ArgumentInfo>): string =
+        let parameterNames = argumentWithMissingNames
+                             |> Seq.map (fun it -> "'" + it.ParameterSymbol.Name + "'")
+        String.Join(", ", parameterNames)
 
-    override val SupportedDiagnostics = ImmutableArray.Create(descriptor)
+
+    override val SupportedDiagnostics =
+        ImmutableArray.Create(
+            DiagnosticDescriptors.NamedArgumentsSuggested,
+            DiagnosticDescriptors.InternalError)
+
 
     override this.Initialize (context: AnalysisContext) =
+        // We don't want to suggest named args in generated code.
+        context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None)
+        // We can handle concurrent invocations.
+        context.EnableConcurrentExecution()
+
         // Register ourself to get invoked to analyze
         //   - invocation expressions; e. g., calling a method.
         //   - and object creation expressions; e. g., invoking a constructor.
         context.RegisterSyntaxNodeAction(
             (fun c -> this.Analyze c),
             SyntaxKind.InvocationExpression,
-            SyntaxKind.ObjectCreationExpression)
+            SyntaxKind.ObjectCreationExpression,
+            SyntaxKind.ImplicitObjectCreationExpression,
+            SyntaxKind.Attribute)
 
-    member private this.filterSupported (methodSymbol: IMethodSymbol) =
-        match methodSymbol.MethodKind with
-        // So far we only support analyzing of the three kinds of methods listed below.
-        |     MethodKind.Ordinary
-            | MethodKind.Constructor
-            | MethodKind.LocalFunction -> Some methodSymbol
-        | _                            -> None
-
-    member private this.formatDiagMessage argsWhichShouldBeNamed =
-        let describeArgGroup
-            (groupDelim: string, sbDescr: StringBuilder)
-            (_, argAndParams: seq<_>) =
-            let groupDescription =
-                String.Join(
-                    ", ",
-                    argAndParams |> Seq.map (fun it -> sprintf "'%s'" it.Parameter.Name))
-            (" and ", sbDescr.Append(groupDelim)
-                             .Append(groupDescription))
-
-        argsWhichShouldBeNamed
-        |> Seq.fold describeArgGroup ("", StringBuilder())
-        |> fun (_, sb) -> sb.ToString()
 
     member private this.Analyze(context: SyntaxNodeAnalysisContext) =
-        maybe {
-            let! sema = context.SemanticModel |> Option.ofObj
-            let! invocationExprSyntax = context.Node |> Option.ofType<InvocationExpressionSyntax>
-            let! methodSymbol =
-                sema.GetSymbolInfo(invocationExprSyntax).Symbol
-                |> Option.ofType<IMethodSymbol>
-                >>= this.filterSupported
-            // We got a supported kind of method.
-            // Delegate heavy-lifting to the call below.
-            let! argsWhichShouldBeNamed = getArgsWhichShouldBeNamed sema invocationExprSyntax
+        try
+            this.DoAnalyze(context)
+        with
+        | ex ->
+            context.ReportDiagnostic(
+                Diagnostic.Create(
+                    DiagnosticDescriptors.InternalError,
+                    context.Node.GetLocation(),
+                    // messageArgs
+                    ex.ToString()))
 
-            // We inspected the arguments of invocation expression.
-            if argsWhichShouldBeNamed |> Seq.any then
-                // There are arguments that should be named -- emit the diagnostic.
-                return context.ReportDiagnostic(
+
+    member private this.DoAnalyze(context: SyntaxNodeAnalysisContext) =
+        let invocationAnalysis = InvocationAnalysis.Of(context.SemanticModel, context.Node)
+        match invocationAnalysis with
+        | StopAnalysis ->
+            ()
+
+        | OK invocationAnalysis ->
+            let argumentWithMissingNames = invocationAnalysis.SuggestNamedArgument()
+            match argumentWithMissingNames with
+            | StopAnalysis ->
+                ()
+
+            | OK argumentWithMissingNames ->
+                if Array.isEmpty argumentWithMissingNames
+                then
+                    ()
+                else
+
+                // There are arguments we want to suggest be named.
+                // Emit a corresponding diagnostic.
+                context.ReportDiagnostic(
                     Diagnostic.Create(
-                        descriptor,
-                        invocationExprSyntax.GetLocation(),
+                        DiagnosticDescriptors.NamedArgumentsSuggested,
+                        context.Node.GetLocation(),
                         // messageArgs
-                        sprintf "%s.%s" methodSymbol.ContainingType.Name methodSymbol.Name,
-                        this.formatDiagMessage argsWhichShouldBeNamed
-                    )
-                )
-            // If none of them should be named or, maybe, they already are named,
-            // we have nothing more to do.
-            else return ()
-        } |> ignore
+                        invocationAnalysis.MethodName,
+                        joinParameterNames argumentWithMissingNames))

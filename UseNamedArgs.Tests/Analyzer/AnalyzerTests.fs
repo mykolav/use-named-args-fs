@@ -1,8 +1,10 @@
 ﻿module UseNamedArgs.Tests.AnalyzerTests
 
+
 open Expecto
 open Support.UseNamedArgsDiagResult
 open UseNamedArgs.Analyzer
+
 
 module private Expect =
     open Support.DiagnosticMatcher
@@ -11,8 +13,8 @@ module private Expect =
 
     let toBeEmittedFrom code expectedDiags =
         let analyzer = UseNamedArgsAnalyzer()
-        expectedDiags 
-        |> Expect.diagnosticsToMatch analyzer 
+        expectedDiags
+        |> Expect.diagnosticsToMatch analyzer
                                      (analyzer.GetSortedDiagnostics(CSharp, [code]))
 
     let emptyDiagnostics code = [||] |> toBeEmittedFrom code
@@ -24,7 +26,7 @@ module private Expect =
 // TODO: ctor. class C { C(int arg1, int arg2) { new C(1, 2); } }
 // TODO: Attribute's parameters and properties?
 [<Tests>]
-let analyzerTests = 
+let analyzerTests =
     testList "The UseNamedArgs analyzer tests" [
         test "Empty code does not trigger diagnostics" {
             Expect.emptyDiagnostics @"";
@@ -39,7 +41,7 @@ let analyzerTests =
                         void Bork()
                         {
                             Gork();
-                        } } } 
+                        } } }
             "
         }
         test "Method w/ one param does not trigger diagnostic" {
@@ -52,7 +54,7 @@ let analyzerTests =
                         void Bork()
                         {
                             Gork(9001);
-                        } } } 
+                        } } }
             "
         }
         test "Method w/ variable number of params does not trigger diagnostic" {
@@ -135,7 +137,7 @@ let analyzerTests =
                         } } }
             "
 
-            let expectedDiag = UseNamedArgsDiagResult.Create(invokedMethod="Gork",
+            let expectedDiag = UseNamedArgsDiagResult.Create(invokedMethod="Wombat.Gork",
                                                              paramNamesByType=[[ "line"; "column" ]],
                                                              fileName="Test0.cs", line=9u, column=29u)
 

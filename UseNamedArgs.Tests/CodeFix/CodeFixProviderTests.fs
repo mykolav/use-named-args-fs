@@ -265,8 +265,8 @@ type CodeFixProviderTests() =
             }
         "
 
-        Assert.That(CSharpProgram.FixedFromStatements(original))
-              .IsEqualIgnoringWhitespaceTo(CSharpProgram.WithStatements(expected))
+        Assert.That(CSharpProgram.FixedFromClasses(original))
+              .IsEqualIgnoringWhitespaceTo(CSharpProgram.WithClasses(expected))
 
 
     [<Fact>]
@@ -295,8 +295,8 @@ type CodeFixProviderTests() =
             }
         "
 
-        Assert.That(CSharpProgram.FixedFromStatements(original))
-              .IsEqualIgnoringWhitespaceTo(CSharpProgram.WithStatements(expected))
+        Assert.That(CSharpProgram.FixedFromClasses(original))
+              .IsEqualIgnoringWhitespaceTo(CSharpProgram.WithClasses(expected))
 
 
     [<Fact>]
@@ -321,5 +321,5 @@ type CodeFixProviderTests() =
             }
         "
 
-        Assert.That(CSharpProgram.FixedFromStatements(original))
-              .IsEqualIgnoringWhitespaceTo(CSharpProgram.WithStatements(expected))
+        Assert.That(CSharpProgram.FixedFromClasses(original))
+              .IsEqualIgnoringWhitespaceTo(CSharpProgram.WithClasses(expected))

@@ -15,12 +15,6 @@ type public UseNamedArgsAnalyzer() =
     inherit DiagnosticAnalyzer()
 
 
-    let joinParameterNames (argumentWithMissingNames: seq<ArgumentInfo>): string =
-        let parameterNames = argumentWithMissingNames
-                             |> Seq.map (fun it -> "'" + it.ParameterSymbol.Name + "'")
-        String.Join(", ", parameterNames)
-
-
     override val SupportedDiagnostics =
         ImmutableArray.Create(
             DiagnosticDescriptors.NamedArgumentsSuggested,
@@ -64,16 +58,15 @@ type public UseNamedArgsAnalyzer() =
             ()
 
         | OK invocationAnalysis ->
-            let argumentWithMissingNames = invocationAnalysis.SuggestNamedArgument()
-            match argumentWithMissingNames with
-            | StopAnalysis ->
+            let suggestedNamedArguments = invocationAnalysis.SuggestNamedArgument()
+            match suggestedNamedArguments with
+            | StopAnalysis
+            | OK [||]      ->
                 ()
 
-            | OK argumentWithMissingNames ->
-                if Array.isEmpty argumentWithMissingNames
-                then
-                    ()
-                else
+            | OK suggestedNamedArguments ->
+                let parameterNames = String.Join(", ", suggestedNamedArguments
+                                                       |> Seq.map (fun it -> "'" + it.ParameterSymbol.Name + "'"))
 
                 // There are arguments we want to suggest be named.
                 // Emit a corresponding diagnostic.
@@ -83,4 +76,4 @@ type public UseNamedArgsAnalyzer() =
                         context.Node.GetLocation(),
                         // messageArgs
                         invocationAnalysis.MethodName,
-                        joinParameterNames argumentWithMissingNames))
+                        parameterNames))

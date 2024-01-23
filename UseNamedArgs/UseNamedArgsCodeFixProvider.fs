@@ -79,15 +79,11 @@ type public UseNamedArgsCodeFixProvider() =
         | OK invocationAnalysis ->
             let suggestedNamedArguments = invocationAnalysis.SuggestNamedArgument()
             match suggestedNamedArguments with
-            | StopAnalysis ->
+            | StopAnalysis
+            | OK [||]      ->
                 return context.Document
 
             | OK suggestedNamedArguments ->
-                if Array.isEmpty suggestedNamedArguments
-                then
-                    return context.Document
-                else
-
                 return! this.ReplaceWithNamedArguments(context,
                                                        // `syntaxNode.ArgumentList` must be present
                                                        // otherwise we wouldn't get to this point in code.

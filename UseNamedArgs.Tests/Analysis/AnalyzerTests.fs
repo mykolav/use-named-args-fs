@@ -159,3 +159,76 @@ type AnalyzerTests() =
 
 
         Assert.That(diagnostics).Match([ expectedDiagnostic ])
+
+
+    [<Fact>]
+    member _.``Extension method w/ params of same type invoked w/ positional args triggers diagnostic``() =
+        let diagnostics = Diagnostics.Of(CSharpProgram.WithClasses(@"
+            class Wombat
+            {
+                void Bork()
+                {
+                    new Wombat().Gork(""Gizmo.cs"", 9000, 1);
+                }
+            }
+
+            static class WombatExtensions
+            {
+                public static void Gork(this Wombat wombat, string fileName, int line, int column) {}
+            }
+        "))
+
+        let expectedDiagnostic = ExpectedDiagnostic.UseNamedArgs(
+                                    invokedMethod="WombatExtensions.Gork",
+                                    fileName="Test0.cs",
+                                    line=9,
+                                    column=21)
+
+
+        Assert.That(diagnostics).Match([ expectedDiagnostic ])
+
+
+    [<Fact>]
+    member _.``Constructor w/ params of same type invoked w/ positional args triggers diagnostic``() =
+        let diagnostics = Diagnostics.Of(CSharpProgram.WithClasses(@"
+            class Wombat
+            {
+                Wombat(string fileName, int line, int column) {}
+
+                void Bork()
+                {
+                    new Wombat(""Gizmo.cs"", 9000, 1);
+                }
+            }
+        "))
+
+        let expectedDiagnostic = ExpectedDiagnostic.UseNamedArgs(
+                                    invokedMethod="Wombat..ctor",
+                                    fileName="Test0.cs",
+                                    line=11,
+                                    column=21)
+
+
+        Assert.That(diagnostics).Match([ expectedDiagnostic ])
+
+
+    [<Fact>]
+    member _.``Primary constructor w/ params of same type invoked w/ positional args triggers diagnostic``() =
+        let diagnostics = Diagnostics.Of(CSharpProgram.WithClasses(@"
+            record Wombat(string fileName, int line, int column)
+            {
+                void Bork()
+                {
+                    new Wombat(""Gizmo.cs"", 9000, 1);
+                }
+            }
+        "))
+
+        let expectedDiagnostic = ExpectedDiagnostic.UseNamedArgs(
+                                    invokedMethod="Wombat..ctor",
+                                    fileName="Test0.cs",
+                                    line=9,
+                                    column=21)
+
+
+        Assert.That(diagnostics).Match([ expectedDiagnostic ])

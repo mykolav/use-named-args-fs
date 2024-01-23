@@ -1,4 +1,4 @@
-# Suggest methods that can benefit from calling them with named arguments
+# Suggest method calls that can benefit from using named arguments
 
 [![Build status](https://ci.appveyor.com/api/projects/status/kr7293hw0oswn9fn?svg=true)](https://ci.appveyor.com/project/mykolav/use-named-args-fs)
 
